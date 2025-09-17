@@ -1,0 +1,34 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+AddRelTag("sync", $textColor="black", $lineColor="black", $lineStyle = DashedLine())
+
+Person(user, "User or Admin", "Accesses via web browser")
+
+System_Boundary(webapp, "Online fitness platform") {
+    Container(frontend, "Web-client", "React.js", "A client using the platform. Get access to customer analytics and statistics")
+    Container(load_balancer, "Load Balancer", "NGINX", "Distributes incoming traffic evenly across multiple instances of Backend API.")
+    Container(api_gateway, "API Gateway", "Amazon API Gateway", "Central entry point for all incoming requests. Performs request validation, authentication, routing, caching etc.")
+    Container(auth, "Authentication Service", "Keycloak", "Handles user authentication and authorization")
+    Container(api, "Backend API", "Java Spring Boot", "Provides the necessary APIs for the operation of a Web application and interaction with external services.\nContains scheduled tasks for synchronizing cache data.", "N instances")
+    ContainerDb(db, "Database", "PostgreSQL", "Stores information about users, class histories, and other necessary information.")
+    ContainerDb(cache_db, "Cache DB (In Memory)", "Redis (local)", "Local temporary storage within app memory for frequently accessed data like categories, authors, etc.")
+}
+
+System_Ext(payment_gateway, "Payment Gateway Simple and fast payments", "A service that provides payment acceptance and subscription management")
+System_Ext(training_library, "Training library", "Corporate library of training videos")
+System_Ext(sms_sender, "SMS-gateway", "An external service for sending SMS messages")
+
+Rel(user, frontend, "Uses web interface", $tags="sync")
+Rel(frontend, api_gateway, "HTTP(S)/REST API\nMakes API calls through gateway", $tags="sync")
+Rel(api_gateway, auth, "HTTP(S)/REST API\nInitialization of the SMS authentication procedure\nToken generation\nToken authentication verification", $tags="sync")
+Rel(auth, sms_sender, "HTTP(S)/REST API\nSMS authentication procedure", $tags="sync")
+Rel(api_gateway, load_balancer, "HTTPS\nRoutes requests to Load Balancer", $tags="sync")
+Rel(load_balancer, api, "Balances load between backend instances", $tags="sync")
+Rel(api, db, "TCP/IP\nReads and writes data", $tags="sync")
+Rel(api, cache_db, "Embedded Redis Java\nRetrieves cached data quickly (locally stored)", $tags="sync")
+Rel(api, payment_gateway, "HTTP(S)/REST API\nProcess payments", $tags="sync")
+Rel(api, training_library, "HTTP(S)/REST API\nExtract training video content", $tags="sync")
+Rel(api, sms_sender, "HTTP(S)/REST API\nSend SMS notifications", $tags="sync")
+
+@enduml
