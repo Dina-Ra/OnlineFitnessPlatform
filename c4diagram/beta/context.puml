@@ -1,0 +1,19 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+AddRelTag("sync", $textColor="black", $lineColor="black", $lineStyle = DashedLine())
+
+Person(u, "User", "Accesses via web browser")
+Person(a, "Admin", "Accesses via web browser")
+
+System(webapp, "Online fitness platform", "The system allows users to access training sessions and manage their subscription.")
+System_Ext(payment_gateway, "Payment Gateway\nSimple and fast payments", "A service that provides payment acceptance and subscription management")
+System_Ext(training_library, "Training library", "Corporate library of training videos")
+System_Ext(sms_sender, "SMS-gateway", "An external service for sending SMS messages")
+
+Rel(u, webapp, HTTP(S)\nFrontend UI interaction, $tags="sync")
+Rel(a, webapp, HTTP(S)\nAdmin panel interface, $tags="sync")
+Rel(webapp, payment_gateway, HTTP(S)/REST API\nProcess payments, $tags="sync")
+Rel(webapp, training_library, HTTP(S)/REST API\nExtract training video content, $tags="sync")
+Rel(webapp, sms_sender, HTTP(S)/REST API\nSend SMS notifications, $tags="sync")
+
+@enduml

@@ -1,0 +1,35 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+AddRelTag("sync", $textColor="black", $lineColor="black", $lineStyle = DashedLine())
+
+System_Boundary(webapp, "Online fitness platform") {
+    Container(api, "Backend API", "Java Spring Boot", "Provides the necessary APIs for the operation of a Web application and interaction with external services.") {
+        Component(services_component, "Business Services", "Spring Boot", "Business services of the platform: subscription management, access to classes\nEndpoints:\n* /user/training/{id}\n* /user/trainings\n* /user/subscription/{id}\n* /user/subscriptions\n* /user/send\n* /users\n* /user/{id}\n* /trainings/categories\n* /analytics/dashboard")
+
+        Component(pg_repository_component, "Data Repository PostgreSQL", "Spring Data JPA/Hibernate", "PostgreSQL database management using the Hibernate ORM.")
+
+        Component(redis_repository_component, "Data Repository Redis", "Spring Data JPA/Hibernate", "Redis database management using the Hibernate ORM.")
+
+        Component(notification_component, "Notification Service", "REST Template", "Responsible for sending notifications to users via external services")
+
+        Component(scheduled_task_component, "Scheduled Task Service", "@Scheduled Spring", "It synchronizes data from the cache and the corporate workout library according to a schedule")
+    }
+
+    ContainerDb(db, "Database", "PostgreSQL", "Stores information about users, class histories, and other necessary information.")
+    ContainerDb(cache_db, "Cache DB (In Memory)", "Redis (local)", "Local temporary storage within app memory for frequently accessed data like categories, authors, etc.")
+}
+
+System_Ext(training_library, "Training library", "Corporate library of training videos")
+System_Ext(sms_sender, "SMS-gateway", "An external service for sending SMS messages")
+
+Rel(services_component, pg_repository_component, "Using a repository to get user data and related data", $tags="sync")
+Rel(services_component, notification_component, "Sending notifications", $tags="sync")
+Rel(services_component, training_library, "HTTP(S)/REST API\nExtract training video content", $tags="sync")
+Rel(services_component, redis_repository_component, "Getting workout data quickly\nGet data", $tags="sync")
+Rel(pg_repository_component, db, "TCP/IP\nReading and writing data", $tags="sync")
+Rel(redis_repository_component, cache_db, "Embedded Redis Java\nReading and writing data", $tags="sync")
+Rel(scheduled_task_component, redis_repository_component, "Synchronization of training metadata with the corporate library", $tags="sync")
+Rel(scheduled_task_component, training_library, "Synchronization of training metadata with the corporate library", $tags="sync")
+Rel(notification_component, sms_sender, "HTTP(S)/REST API\nSend SMS notifications", $tags="sync")
+
+@enduml
